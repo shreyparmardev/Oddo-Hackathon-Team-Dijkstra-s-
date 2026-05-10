@@ -1,0 +1,131 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String            @id @default(uuid())
+  clerkId          String            @unique
+  firstName        String
+  lastName         String
+  email            String            @unique
+  location         String?
+  avatarUrl        String?
+  trips            Trip[]
+  sharedTrips      SharedTrip[]
+  savedDestinations SavedDestination[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+}
+
+model Trip {
+  id           String        @id @default(uuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title        String
+  destination  String
+  startDate    DateTime?
+  endDate      DateTime?
+  status       String        @default("draft") // "upcoming", "past", "draft"
+  imageUrl     String?
+  progress     Int           @default(0)
+  budget       Float?        @default(0)
+  stops        TripStop[]
+  activities   Activity[]
+  expenses     Expense[]
+  packingItems PackingItem[]
+  journal      JournalEntry[]
+  sharedTrip   SharedTrip?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model TripStop {
+  id          String   @id @default(uuid())
+  tripId      String
+  trip        Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  name        String
+  location    String
+  arrivalDate DateTime?
+  departureDate DateTime?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Activity {
+  id          String   @id @default(uuid())
+  tripId      String
+  trip        Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  date        DateTime?
+  time        String?  // e.g. "14:00"
+  cost        Float?
+  type        String   @default("activity") // "flight", "hotel", "activity"
+  imageUrl    String?
+  tags        String   // comma separated tags "CULTURE,CULINARY"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Expense {
+  id          String   @id @default(uuid())
+  tripId      String
+  trip        Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  title       String
+  amount      Float
+  category    String   // "Flights", "Hotels", "Food", "Activities", "Shopping"
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PackingItem {
+  id          String   @id @default(uuid())
+  tripId      String
+  trip        Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  name        String
+  isPacked    Boolean  @default(false)
+  category    String   // "Clothes", "Electronics", "Documents", "Toiletries"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model JournalEntry {
+  id          String   @id @default(uuid())
+  tripId      String
+  trip        Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  title       String
+  content     String
+  date        DateTime @default(now())
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SharedTrip {
+  id          String   @id @default(uuid())
+  tripId      String   @unique
+  trip        Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token       String   @unique
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SavedDestination {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  imageUrl    String?
+  tags        String   // comma separated tags
+  createdAt   DateTime @default(now())
+}
